@@ -56,14 +56,18 @@ void cleanupSkia() {
     delete sContext;
 }
 
-void ui_init() {
-    ctx.theme = DEFAULT_THEME;
+void setup_game() {
     ctx.board = standard();
     ctx.flipped = true;
     ctx.players[0].isHuman = true;
     ctx.players[0].engine = nullptr;
     ctx.players[1].isHuman = false;
-    ctx.players[1].engine = new MinMaxEngine(6);
+    ctx.players[1].engine = new MinMaxEngine(6, 10);
+}
+
+void ui_init() {
+    ctx.theme = DEFAULT_THEME;
+    setup_game();
 
     glfwSetErrorCallback(errorCallback);
     if (!glfwInit()) {

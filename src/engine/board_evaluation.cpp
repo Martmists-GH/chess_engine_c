@@ -36,8 +36,11 @@ float evaluatePieces(Board* board, const int* whitePieces, const int* blackPiece
 }
 
 static Board copyForBlack;
+static std::vector<Move> movesAvailable(120);
 
 float evaluateMovement(Board* board, const int* whitePieces, const int* blackPieces) {
+    movesAvailable.clear();
+
     float moves = 0.f;
     Board* white;
     Board* black;
@@ -50,7 +53,6 @@ float evaluateMovement(Board* board, const int* whitePieces, const int* blackPie
         black = &copyForBlack;
     }
 
-    std::vector<Move> movesAvailable;
     for (int i = 0; i < 16; i++) {
         int widx = whitePieces[i];
         int bidx = blackPieces[i];

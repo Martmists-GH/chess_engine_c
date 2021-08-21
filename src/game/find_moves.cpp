@@ -154,9 +154,13 @@ std::vector<Move> *movesSimple(Board *board, int index) {
 }
 
 static Board tempMoveBoard;
+static std::vector<Move> found(20);
+static std::vector<Move> replies(80);
 
 void movesSmart(Board *board, int index, std::vector<Move>* good) {
-    std::vector<Move> found;
+    found.clear();
+    replies.clear();
+
     movesSimple(board, index, &found);
 
     int otherPieces[16];
@@ -170,7 +174,6 @@ void movesSmart(Board *board, int index, std::vector<Move>* good) {
         }
     }
 
-    std::vector<Move> replies;
     for (auto &mv : found) {
         memcpy(&tempMoveBoard, board, sizeof(Board));
         move(&tempMoveBoard, mv);
