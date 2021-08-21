@@ -25,7 +25,7 @@ void rotate(Board* board) {
     }
 }
 
-inline int rotateIndex(int index) {
+int rotateIndex(int index) {
     return 119 - index;
 }
 

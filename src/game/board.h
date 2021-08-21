@@ -26,7 +26,7 @@ typedef struct {
 
 Board* copy(Board* source);
 void rotate(Board* board);
-inline int rotateIndex(int index);
+int rotateIndex(int index);
 
 void updateState(Board* board);
 void move(Board* board, Move move);
