@@ -117,7 +117,7 @@ void ChessGameState::s960() {
     }
 }
 
-int ChessGameState::getWinner() {
+int ChessGameState::getWinner() const {
     switch (status) {
         case PLAYING:
             return -1;
@@ -130,7 +130,7 @@ int ChessGameState::getWinner() {
     }
 }
 
-int ChessGameState::getWinningPlayer() {
+int ChessGameState::getWinningPlayer() const {
     float socre = evaluate(*this);
     if (socre <= -1) {
         return 1;
@@ -153,7 +153,7 @@ static PieceType PROMOTIONS[4] {
     KNIGHT, BISHOP, ROOK, QUEEN
 };
 
-void ChessGameState::getPossibleMovesSimple(std::vector<ChessMove>& found, int index) {
+void ChessGameState::getPossibleMovesSimple(std::vector<ChessMove>& found, int index) const {
     auto p = pieces[index];
     auto mvl = PIECE_MOVES[p.type];
 
@@ -285,7 +285,7 @@ static std::vector<ChessMove> found(120);
 static std::vector<ChessMove> replies(120);
 static ChessGameState tempMoveState {};
 
-void ChessGameState::getPossibleMoves(std::vector<ChessMove>& vector, int index) {
+void ChessGameState::getPossibleMoves(std::vector<ChessMove>& vector, int index) const {
     found.clear();
     replies.clear();
 
@@ -302,7 +302,7 @@ void ChessGameState::getPossibleMoves(std::vector<ChessMove>& vector, int index)
         }
     }
 
-    for (auto &mv : found) {
+    for (ChessMove &mv : found) {
         tempMoveState = *this;
         tempMoveState.move(mv);
 
@@ -338,7 +338,7 @@ void ChessGameState::getPossibleMoves(std::vector<ChessMove>& vector, int index)
     }
 }
 
-void ChessGameState::getPossibleMoves(std::vector<ChessMove> &vector) {
+void ChessGameState::getPossibleMoves(std::vector<ChessMove> &vector) const {
     for (int i = 20; i < 100; i++) {
         if (pieces[i].black == blackToMove) {
             getPossibleMoves(vector, i);
@@ -384,8 +384,11 @@ void ChessGameState::move(ChessMove &move) {
     currentPlayer = 1-currentPlayer;
 }
 
-static std::vector<ChessMove> blackMoves(20), whiteMoves(20), foundMoves(5);
+static std::vector<ChessMove> blackMoves(20), whiteMoves(20);
 void ChessGameState::update() {
+    blackMoves.clear();
+    whiteMoves.clear();
+
     int whitePieces[16];
     int blackPieces[16];
     int wi, bi;
@@ -414,13 +417,11 @@ void ChessGameState::update() {
 
     // check black moves
     for (auto i : blackPieces) {
-        getPossibleMoves(foundMoves, i);
-        blackMoves.insert(blackMoves.end(), foundMoves.begin(), foundMoves.end());
+        getPossibleMoves(blackMoves, i);
     }
     // check white moves
     for (auto i : whitePieces) {
-        getPossibleMoves(foundMoves, i);
-        whiteMoves.insert(whiteMoves.end(), foundMoves.begin(), foundMoves.end());
+        getPossibleMoves(whiteMoves, i);
     }
 
     bool isMate = false;
@@ -464,6 +465,7 @@ void ChessGameState::update() {
     int whiteKB, blackKB, whiteOther, blackOther;
     whiteKB = blackKB = whiteOther = blackOther = 0;
     for (int i : whitePieces) {
+        if (i == 0) break;
         auto p = pieces[i];
         if (p.type == PieceType::KNIGHT || p.type == PieceType::BISHOP) {
             whiteKB++;
@@ -472,6 +474,7 @@ void ChessGameState::update() {
         }
     }
     for (int i : blackPieces) {
+        if (i == 0) break;
         auto p = pieces[i];
         if (p.type == PieceType::KNIGHT || p.type == PieceType::BISHOP) {
             blackKB++;
@@ -485,7 +488,7 @@ void ChessGameState::update() {
     }
 }
 
-long ChessGameState::hash() {
+long ChessGameState::hash() const {
     // TODO
     return 0;
 }

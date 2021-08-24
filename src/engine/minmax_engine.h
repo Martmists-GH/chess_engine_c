@@ -14,7 +14,7 @@ private:
     Node<ChessMove, ChessGameState> root;
 
 public:
-    MinMaxEngine(int depth, int k);
+    MinMaxEngine(int depth, int k, int c);
 
     ChessMove process(ChessGameState& state) override;
 };

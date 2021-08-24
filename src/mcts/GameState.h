@@ -21,19 +21,19 @@ public:
     /**
      * Store all possible moves in a vector
      */
-    virtual void getPossibleMoves(std::vector<T>& vector) = 0;
+    virtual void getPossibleMoves(std::vector<T>& vector) const = 0;
 
     /**
      * Get max number of players
      */
-    int getMaxPlayers() {
+    int getMaxPlayers() const {
         return maxPlayers;
     }
 
     /**
      * Get index of current player;
      */
-    int getCurrentPlayer() {
+    int getCurrentPlayer() const {
         return currentPlayer;
     }
 
@@ -42,12 +42,12 @@ public:
     /**
      * -1 for still playing, max players for draw.
      */
-    virtual int getWinner() = 0;
+    virtual int getWinner() const = 0;
 
     /**
      * Player with the advantage, max players for equal.
      */
-    virtual int getWinningPlayer() = 0;
+    virtual int getWinningPlayer() const = 0;
 
     /**
      * Apply move `mv` to the current game state
@@ -57,5 +57,5 @@ public:
     /**
      * Get a hash to see if two states are equal
      */
-    virtual long hash() = 0;
+    virtual long hash() const = 0;
 };

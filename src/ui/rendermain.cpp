@@ -11,6 +11,7 @@
 #include "layers/piece_layer.h"
 #include "layers/moves_layer.h"
 #include "../engine/minmax_engine.h"
+#include "../engine/random_engine.h"
 #include <cstdio>
 #include <cstdlib>
 #include <list>
@@ -60,10 +61,10 @@ void setup_game() {
     ctx.board = new ChessGameState();
     ctx.board->standard();
     ctx.flipped = true;
-    ctx.players[0].isHuman = true;
-    ctx.players[0].engine = nullptr;
+    ctx.players[0].isHuman = false;
+    ctx.players[0].engine = new RandomEngine();
     ctx.players[1].isHuman = false;
-    ctx.players[1].engine = new MinMaxEngine(8, 30);
+    ctx.players[1].engine = new MinMaxEngine(16, 50, 30);
 }
 
 void ui_init() {

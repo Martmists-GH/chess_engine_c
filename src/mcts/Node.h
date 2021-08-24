@@ -20,41 +20,51 @@ bool _sort(const Node<M, S>& a, const Node<M, S>& b) {
     return a.ucb1() < b.ucb1();
 }
 
+template<MoveT M, StateT S>
+bool _sortBest(const Node<M, S>& a, const Node<M, S>& b) {
+    return (a.won / a.total) < (b.won / b.total);
+}
+
 template <MoveT M, StateT S>
 class Node {
 private:
-    int player;
-    Node* parent;
+    int player = 0;
     M lastMove;
     std::vector<Node> children;
     std::vector<M> possibleMoves;
 
-    int C;
-
-    float won = 0.f;
-    float total = 0.f;
-
     void generateMoves() {
         this->possibleMoves.reserve(20);
         currentState.getPossibleMoves(this->possibleMoves);
+        std::random_shuffle(possibleMoves.begin(),  possibleMoves.end());
+//        this->possibleMoves.resize(C);
     }
 
     void selection() {
-        if (this->possibleMoves.empty()) {
+        if (this->children.empty()) {
             this->expansion();
         }
 
-        std::sort(children.begin(), children.end(), &_sort<M, S>);
+        if (children.size() > 1) {
+            printf("Sorting children by ucb1\n");
+            std::sort(children.begin(), children.end(), &_sort<M, S>);
+        }
     }
 
     void expansion() {
         if (this->possibleMoves.empty()) {
             generateMoves();
-            this->children.reserve(10);
-            for (auto mv : possibleMoves) {
+        }
+
+        if (this->children.empty()) {
+            this->children.reserve(50);  // Good enough for most cases
+            for (auto &mv : possibleMoves) {
+                printf("Move: (%d, %d)\n", mv.fromIndex, mv.toIndex);
                 addChild(mv);
             }
         }
+
+        printf("Generated %d moves with %d children\n", possibleMoves.size(), children.size());
     }
 
     void simulation(int depth) {
@@ -69,7 +79,7 @@ private:
         }
 
         if (this->possibleMoves.empty()) {
-            generateMoves();
+            expansion();
         }
 
         if (this->possibleMoves.empty()) {
@@ -78,12 +88,14 @@ private:
             return;
         }
 
-        M move = randomItem(possibleMoves);
-        Node<M, S> node = Node(currentState, this, move);
-        node.simulation(depth - 1);
+        M &move = randomItem(possibleMoves);
+        Node<M, S> nodeN(currentState, this, move);
+        nodeN.simulation(depth - 1);
     }
 
     void backpropagation(int winner) {
+        printf("Winner: %d, backpropagating\n", winner);
+
         total += 1;
         if (winner == currentState.getMaxPlayers()) {
             won += 0.5f;
@@ -91,12 +103,19 @@ private:
             won += 1;
         }
 
+//        printf("t = %.1f, n = %.1f\n", won, total);
+
         if (parent != nullptr) {
             parent->backpropagation(winner);
         }
     }
 
 public:
+    int C = 2;
+
+    float won = 0.f;
+    float total = 0.f;
+    Node* parent = nullptr;
     S currentState;
 
     Node(S &state, Node* parent, M move) : parent(parent) {
@@ -108,6 +127,9 @@ public:
         }
         currentState.update();
         lastMove = move;
+        if (parent != nullptr) {
+            C = parent->C;
+        }
     }
     Node(S &state, Node* parent) : Node(state, parent, M()) {
         lastMove.dummy();
@@ -133,11 +155,13 @@ public:
         }
 
         auto root = parent;
-        while (root->parent != nullptr) {
+        while (root->parent != nullptr && root->parent != root) {
             root = root->parent;
         }
 
-        return (won / total) + C * std::sqrt(std::log(root->total) / total);
+        float result = (won / total) + parent->children.size() * std::sqrt(std::log(root->total) / total);
+//        printf("(%.1f / %.1f) + %d * sqrt(log(%.1f) / %.1f) = %.2f\n", won, total, C, root->total, total, result);
+        return result;
     }
 
     void addChild(M &move) {
@@ -157,22 +181,31 @@ public:
         return children.at(children.size()-1);
     }
 
-
     void doMCTS(int depth) {
         this->selection();
-        Node<M, S> child = children.at(children.size()-1);
+
+        if (children.size() == 1) {
+            return;
+        }
+
+//        printf("Getting child with highest ucb1\n");
+        Node<M, S> &child = children.at(children.size()-1);
 
         if (child.total == 0) {
+//            printf("n=0, simulating\n");
             child.simulation(depth);
         } else {
+//            printf("n>0, expanding\n");
             child.expansion();
-            child.doMCTS(depth - 1);
+            child.doMCTS(depth);
         }
     }
 
     M getBestMove() {
-        std::sort(children.begin(), children.end(), &_sort<M,S>);
-        return children.at(children.size() - 1).lastMove;
+        std::sort(children.begin(), children.end(), &_sortBest<M,S>);
+        auto &child = children.at(children.size() - 1);
+        printf("Selected move from %d to %d (ucb1 %.6f)\n", ((ChessMove)child.lastMove).fromIndex, ((ChessMove)child.lastMove).toIndex, child.ucb1());
+        return child.lastMove;
     }
 
     Node<M, S> deallocAndGet(M move) {

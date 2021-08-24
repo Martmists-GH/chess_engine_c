@@ -33,12 +33,12 @@ public:
 
     void rotate();
 
-    int getWinner() override;
-    int getWinningPlayer() override;
-    void getPossibleMovesSimple(std::vector<ChessMove>& vector, int index);
-    void getPossibleMoves(std::vector<ChessMove>& vector, int index);
-    void getPossibleMoves(std::vector<ChessMove>& vector) override;
+    int getWinner() const override;
+    int getWinningPlayer() const override;
+    void getPossibleMovesSimple(std::vector<ChessMove>& vector, int index) const;
+    void getPossibleMoves(std::vector<ChessMove>& vector, int index) const;
+    void getPossibleMoves(std::vector<ChessMove>& vector) const override;
     void move(ChessMove &mv) override;
     void update() override;
-    long hash() override;
+    long hash() const override;
 };

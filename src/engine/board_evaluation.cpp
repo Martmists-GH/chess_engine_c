@@ -15,7 +15,7 @@ static float PIECE_SCORE[] = {
         1.0
 };
 
-float evaluatePieces(ChessGameState& board, const int* whitePieces, const int* blackPieces) {
+float evaluatePieces(const ChessGameState& board, const int* whitePieces, const int* blackPieces) {
     float score = 0;
 
     for (int i = 0; i < 16; i++) {
@@ -37,12 +37,12 @@ float evaluatePieces(ChessGameState& board, const int* whitePieces, const int* b
 static ChessGameState copyForBlack;
 static std::vector<ChessMove> movesAvailable(120);
 
-float evaluateMovement(ChessGameState& board, const int* whitePieces, const int* blackPieces) {
+float evaluateMovement(const ChessGameState& board, const int* whitePieces, const int* blackPieces) {
     movesAvailable.clear();
 
     float moves = 0.f;
-    ChessGameState* white;
-    ChessGameState* black;
+    const ChessGameState* white;
+    const ChessGameState* black;
 
     if (board.blackToMove) {
         black = &board;
@@ -69,7 +69,7 @@ float evaluateMovement(ChessGameState& board, const int* whitePieces, const int*
     return .5f * moves;
 }
 
-float evaluate(ChessGameState& board) {
+float evaluate(const ChessGameState& board) {
     switch(board.status) {
         case CHECKMATE_BLACK:
             return -999999;
