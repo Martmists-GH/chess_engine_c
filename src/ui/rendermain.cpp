@@ -29,7 +29,7 @@ static GLFWwindow* window = nullptr;
 static GrDirectContext* sContext = nullptr;
 static SkSurface* sSurface = nullptr;
 static RenderContext ctx;
-static GameState prevState = GameState::PLAYING;
+static Status prevState = Status::PLAYING;
 
 void initSkia(int w, int h) {
     auto interface = GrGLMakeNativeInterface();
@@ -57,12 +57,13 @@ void cleanupSkia() {
 }
 
 void setup_game() {
-    ctx.board = standard();
+    ctx.board = new ChessGameState();
+    ctx.board->standard();
     ctx.flipped = true;
     ctx.players[0].isHuman = true;
     ctx.players[0].engine = nullptr;
     ctx.players[1].isHuman = false;
-    ctx.players[1].engine = new MinMaxEngine(6, 10);
+    ctx.players[1].engine = new MinMaxEngine(8, 30);
 }
 
 void ui_init() {
@@ -106,12 +107,12 @@ void ui_loop() {
         sContext->flush();
         glfwSwapBuffers(window);
 
-        if (ctx.board->state == GameState::PLAYING) {
+        if (ctx.board->status == Status::PLAYING) {
             doEngineMove();
         }
 
-        if (ctx.board->state != GameState::PLAYING && prevState == GameState::PLAYING) {
-            prevState = ctx.board->state;
+        if (ctx.board->status != Status::PLAYING && prevState == Status::PLAYING) {
+            prevState = ctx.board->status;
             switch(prevState) {
                 case DRAW:
                     printf("Game ended in a draw\n");
@@ -138,8 +139,9 @@ void ui_loop() {
 void doEngineMove() {
     auto cfg = &ctx.players[ctx.board->blackToMove];
     if (!cfg->isHuman) {
-        auto mv = cfg->engine->process(ctx.board);
-        move(ctx.board, mv);
+        auto mv = cfg->engine->process(*ctx.board);
+        ctx.board->move(mv);
+        ctx.board->update();
     }
 }
 

@@ -5,15 +5,14 @@
 #include <include/core/SkStream.h>
 #include <modules/svg/include/SkSVGDOM.h>
 #include "moves_layer.h"
-#include "../../game/find_moves.h"
 #include "../pieces_svg.h"
 
 static bool moving = false;
 static int movingIndex = -1;
 static float mouseX = -1;
 static float mouseY = -1;
-static std::vector<Move>* movesPossible = nullptr;
-static Move promotionMove = DUMMY_MOVE;
+static std::vector<ChessMove> movesPossible;
+static ChessMove promotionMove {};
 
 static int PROMOTION_SQUARES[4] = {
         27, 28, 35, 36
@@ -39,11 +38,11 @@ void renderMoves(RenderContext* ctx) {
 
         square.setXYWH(col * squareSize, row * squareSize, squareSize, squareSize);
 
-        for (const auto &item : *movesPossible) {
+        for (const auto &item : movesPossible) {
             int idx = item.toIndex;
 
             if (ctx->flipped) {
-                idx = rotateIndex(idx);
+                idx = 119 - idx;
             }
 
             row = idx / 10 - 2;
@@ -116,7 +115,7 @@ void renderMoves(RenderContext* ctx) {
 }
 
 void clickMouse(MetaContext* ctx, int action, int button, int mods) {
-    if (action == 0 && button == GLFW_MOUSE_BUTTON_LEFT && ctx->board->state == GameState::PLAYING) {
+    if (action == 0 && button == GLFW_MOUSE_BUTTON_LEFT && ctx->board->status == Status::PLAYING) {
         moving = !moving;
 
         float squareSize = ctx->size.width / 8.f;
@@ -126,7 +125,7 @@ void clickMouse(MetaContext* ctx, int action, int button, int mods) {
         int idx = sqX + 8 * sqY;
         int bidx = 1 + sqX + 10 * (sqY + 2);
         if (ctx->flipped) {
-            bidx = rotateIndex(bidx);
+            bidx = 119 - bidx;
         }
 
         if (promotionMove.fromIndex != -1) {
@@ -151,11 +150,11 @@ void clickMouse(MetaContext* ctx, int action, int button, int mods) {
             } else {
                 moving = false;
                 promotionMove.promotion = promotion;
-                move(ctx->board, promotionMove);
-                updateState(ctx->board);
+                ctx->board->move(promotionMove);
+                ctx->board->update();
             }
 
-            promotionMove = DUMMY_MOVE;
+            promotionMove.dummy();
             return;
         }
 
@@ -163,8 +162,8 @@ void clickMouse(MetaContext* ctx, int action, int button, int mods) {
             if (ctx->board->pieces[bidx].type != PieceType::EMPTY && ctx->board->pieces[bidx].black == ctx->board->blackToMove) {
                 // clicked 1st
                 movingIndex = idx;
-                movesPossible = movesSmart(ctx->board, bidx);
-                if (movesPossible->size() == 0) {
+                ctx->board->getPossibleMoves(movesPossible, bidx);
+                if (movesPossible.empty()) {
                     moving = false;
                     return;
                 }
@@ -174,25 +173,26 @@ void clickMouse(MetaContext* ctx, int action, int button, int mods) {
             }
         } else {
             // clicked 2nd; check moves and do them
-            Move* mv = nullptr;
-            for (auto &move : *movesPossible) {
+            ChessMove mv { };
+            mv.dummy();
+
+            for (auto& move : movesPossible) {
                 if (move.toIndex == bidx) {
-                    mv = &move;
+                    mv = move;
                 }
             }
 
-            if (mv != nullptr) {
-                if (mv->promotion != PieceType::INVALID) {
-                    promotionMove = *mv;
+            if (mv.fromIndex != -1) {
+                if (mv.promotion != PieceType::INVALID) {
+                    promotionMove = mv;
                 } else {
-                    move(ctx->board, *mv);
-                    updateState(ctx->board);
+                    ctx->board->move(mv);
+                    ctx->board->update();
                 }
             }
 
             // free resources
-            delete movesPossible;
-            movesPossible = nullptr;
+            movesPossible.clear();
             movingIndex = -1;
         }
     }
@@ -210,5 +210,6 @@ static RenderLayer movesLayer {
 };
 
 RenderLayer* getMovesLayer() {
+    promotionMove.dummy();
     return &movesLayer;
 }

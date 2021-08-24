@@ -18,11 +18,14 @@ add_executable(chess_engine_c
         src/main.cpp
 
         # engine
+        src/engine/board_evaluation.cpp
         src/engine/random_engine.cpp
+        src/engine/minmax_engine.cpp
 
         # game
-        src/game/board.cpp
-        src/game/find_moves.cpp
+        src/game/ChessGameState.cpp
+        src/game/ChessMove.cpp
+        src/game/ChessPiece.cpp
 
         # ui
         src/ui/rendermain.cpp
@@ -32,6 +35,6 @@ add_executable(chess_engine_c
 
         # utils
         src/util/random.cpp
-        src/engine/minmax_engine.cpp src/engine/minmax_engine.h src/engine/board_evaluation.cpp src/engine/board_evaluation.h)
+)
 
 target_link_libraries(chess_engine_c glfw skiacc)

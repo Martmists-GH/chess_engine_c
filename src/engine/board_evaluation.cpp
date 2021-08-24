@@ -5,7 +5,6 @@
 #include <cstring>
 #include <vector>
 #include "board_evaluation.h"
-#include "../game/find_moves.h"
 
 static float PIECE_SCORE[] = {
         200.0,
@@ -16,7 +15,7 @@ static float PIECE_SCORE[] = {
         1.0
 };
 
-float evaluatePieces(Board* board, const int* whitePieces, const int* blackPieces) {
+float evaluatePieces(ChessGameState& board, const int* whitePieces, const int* blackPieces) {
     float score = 0;
 
     for (int i = 0; i < 16; i++) {
@@ -24,32 +23,32 @@ float evaluatePieces(Board* board, const int* whitePieces, const int* blackPiece
         int bidx = blackPieces[i];
 
         if (widx != 0) {
-            score += PIECE_SCORE[board->pieces[widx].type];
+            score += PIECE_SCORE[board.pieces[widx].type];
         }
 
         if (bidx != 0) {
-            score -= PIECE_SCORE[board->pieces[widx].type];
+            score -= PIECE_SCORE[board.pieces[widx].type];
         }
     }
 
     return score;
 }
 
-static Board copyForBlack;
-static std::vector<Move> movesAvailable(120);
+static ChessGameState copyForBlack;
+static std::vector<ChessMove> movesAvailable(120);
 
-float evaluateMovement(Board* board, const int* whitePieces, const int* blackPieces) {
+float evaluateMovement(ChessGameState& board, const int* whitePieces, const int* blackPieces) {
     movesAvailable.clear();
 
     float moves = 0.f;
-    Board* white;
-    Board* black;
+    ChessGameState* white;
+    ChessGameState* black;
 
-    if (board->blackToMove) {
-        black = board;
+    if (board.blackToMove) {
+        black = &board;
         white = &copyForBlack;
     } else {
-        white = board;
+        white = &board;
         black = &copyForBlack;
     }
 
@@ -58,11 +57,11 @@ float evaluateMovement(Board* board, const int* whitePieces, const int* blackPie
         int bidx = blackPieces[i];
 
         if (widx != 0) {
-            movesSmart(white, widx, &movesAvailable);
+            white->getPossibleMoves(movesAvailable, widx);
             moves += movesAvailable.size();
         }
         if (bidx != 0) {
-            movesSmart(black, bidx, &movesAvailable);
+            black->getPossibleMoves(movesAvailable, bidx);
             moves -= movesAvailable.size();
         }
     }
@@ -70,9 +69,8 @@ float evaluateMovement(Board* board, const int* whitePieces, const int* blackPie
     return .5f * moves;
 }
 
-float evaluate(Board *board) {
-    updateState(board);
-    switch(board->state) {
+float evaluate(ChessGameState& board) {
+    switch(board.status) {
         case CHECKMATE_BLACK:
             return -999999;
         case CHECKMATE_WHITE:
@@ -83,14 +81,16 @@ float evaluate(Board *board) {
         default:
             int wp[16], bp[16];
             int wi = 0, bi = 0;
-            memcpy(&copyForBlack, board, sizeof(Board));
-            move(&copyForBlack, DUMMY_MOVE);
+            copyForBlack = board;
+            ChessMove dummy;
+            dummy.dummy();
+            copyForBlack.move(dummy);
 
             memset(&wp, 0, 16 * sizeof(int));
             memset(&bp, 0, 16 * sizeof(int));
 
             for (int i = 20; i < 100; i++) {
-                auto p = board->pieces[i];
+                auto p = board.pieces[i];
                 if (p.type != PieceType::INVALID && p.type != PieceType::EMPTY) {
                     if (p.black) {
                         bp[bi] = i;

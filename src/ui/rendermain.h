@@ -8,8 +8,8 @@
 #include <GLFW/glfw3.h>
 #include <include/core/SkCanvas.h>
 #include "theme.h"
-#include "../game/board.h"
 #include "../engine/engine.h"
+#include "../game/ChessGameState.h"
 
 typedef struct {
     bool isHuman;
@@ -21,7 +21,7 @@ typedef struct {
         int width;
         int height;
     } size;
-    Board* board;
+    ChessGameState* board;
     PlayerConfig players[2];
     bool flipped;
 } MetaContext;
@@ -31,7 +31,7 @@ typedef struct {
         int width;
         int height;
     } size;
-    Board* board;
+    ChessGameState* board;
     PlayerConfig players[2];
     bool flipped;
     Theme theme;

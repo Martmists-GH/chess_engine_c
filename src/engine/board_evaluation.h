@@ -4,6 +4,6 @@
 
 #pragma once
 
-#include "../game/board.h"
+#include "../game/ChessGameState.h"
 
-float evaluate(Board* board);
+float evaluate(ChessGameState& board);

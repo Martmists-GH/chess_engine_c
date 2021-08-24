@@ -5,9 +5,9 @@
 #pragma once
 
 
-#include "../game/board.h"
+#include "../game/ChessGameState.h"
 
 class Engine {
 public:
-    virtual Move process(Board* state) = 0;
+    virtual ChessMove process(ChessGameState& state) = 0;
 };

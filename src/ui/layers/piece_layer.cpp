@@ -7,7 +7,7 @@
 #include "piece_layer.h"
 #include "../pieces_svg.h"
 
-static Board renderBoard;
+static ChessGameState renderBoard;
 
 void renderPieces(RenderContext* ctx) {
     auto canvas = ctx->canvas;
@@ -16,7 +16,7 @@ void renderPieces(RenderContext* ctx) {
     SkMemoryStream stream(svg.c_str(), svg.length());
     auto root = SkSVGDOM::MakeFromStream(stream);
 
-    memcpy(&renderBoard, ctx->board, sizeof(Board));
+    renderBoard = *ctx->board;
 //    rotate(&renderBoard);
 
     for (int i = 0; i < 64; i++) {
@@ -24,7 +24,7 @@ void renderPieces(RenderContext* ctx) {
         int row = i / 8;
         int idx = (10 * (row + 2)) + (col + 1);
         if (ctx->flipped) {
-            idx = rotateIndex(idx);
+            idx = 119 - idx;
         }
         auto p = renderBoard.pieces[idx];
 

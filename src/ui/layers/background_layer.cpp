@@ -18,8 +18,8 @@ void renderBoard(RenderContext* ctx) {
         int col = i % 8;
         auto mv = ctx->board->lastMove;
         if (ctx->flipped) {
-            mv.fromIndex = (char)rotateIndex(mv.fromIndex);
-            mv.toIndex = (char)rotateIndex(mv.toIndex);
+            mv.fromIndex = (char)(119 - mv.fromIndex);
+            mv.toIndex = (char)(119 - mv.toIndex);
         }
 
         if ((row == mv.fromIndex / 10 - 2 && col == mv.fromIndex % 10 - 1) || (row == mv.toIndex / 10 - 2 && col == mv.toIndex % 10 - 1)) {

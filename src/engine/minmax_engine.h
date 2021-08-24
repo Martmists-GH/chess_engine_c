@@ -6,18 +6,15 @@
 
 #include <vector>
 #include "engine.h"
+#include "../mcts/Node.h"
 
 class MinMaxEngine : public Engine {
 private:
     int depth, k;
-    Board* boards;
-    std::vector<Move>* moves;
-    void monteCarlo(Board *board, int* won, int* total, int depth);
-    float alphabeta(Board *board, float alpha, float beta, int depth);
+    Node<ChessMove, ChessGameState> root;
 
 public:
     MinMaxEngine(int depth, int k);
-    ~MinMaxEngine();
 
-    Move process(Board* state) override;
+    ChessMove process(ChessGameState& state) override;
 };
