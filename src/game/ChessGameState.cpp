@@ -7,32 +7,27 @@
 #include "ChessGameState.h"
 #include "../engine/board_evaluation.h"
 
-ChessGameState::ChessGameState() {
-    maxPlayers = 2;
-    standard();
-}
-
-void ChessGameState::rotate() {
+void rotate(ChessGameState* this_) {
     for (int index = 20; index < 60; index++) {
-        auto tmp = pieces[index];
-        pieces[index] = pieces[119-index];
-        pieces[119-index] = tmp;
+        auto tmp = this_->pieces[index];
+        this_->pieces[index] = this_->pieces[119-index];
+        this_->pieces[119-index] = tmp;
     }
 }
 
-void ChessGameState::standard() {
-    lastMove.dummy();
-    lastMove2.dummy();
+void standard(ChessGameState* this_) {
+    this_->lastMove = DUMMY_MOVE;
+    this_->lastMove2 = DUMMY_MOVE;
 
     for (int index = 0; index < 120; index++) {
         int row = index / 10;
         int column = index % 10;
         if (row < 2 || row > 9 || column == 0 || column == 9) {
-            pieces[index].dummy();
+            this_->pieces[index] = INVALID_PIECE;
             continue;
         }
 
-        auto p = pieces[index];
+        auto p = this_->pieces[index];
 
         if (row < 4) {
             // white
@@ -42,7 +37,7 @@ void ChessGameState::standard() {
             p.black = true;
         } else {
             // empty
-            pieces[index].empty();
+            this_->pieces[index] = EMPTY_PIECE;
             continue;
         }
 
@@ -72,7 +67,7 @@ void ChessGameState::standard() {
             }
         }
 
-        pieces[index] = p;
+        this_->pieces[index] = p;
     }
 }
 
@@ -80,18 +75,18 @@ static PieceType setup960[] = {
     KING, QUEEN, ROOK, ROOK, BISHOP, BISHOP, KNIGHT, KNIGHT
 };
 
-void ChessGameState::s960() {
+void s960(ChessGameState* this_) {
     std::shuffle(&setup960[0], &setup960[7], std::mt19937(std::random_device()()));
 
     for (int index = 0; index < 120; index++) {
         int row = index / 10;
         int column = index % 10;
         if (row < 2 || row > 9 || column == 0 || column == 9) {
-            pieces[index].dummy();
+            this_->pieces[index] = INVALID_PIECE;
             continue;
         }
 
-        auto p = pieces[index];
+        auto p = this_->pieces[index];
 
         if (row < 4) {
             // white
@@ -101,7 +96,7 @@ void ChessGameState::s960() {
             p.black = true;
         } else {
             // empty
-            pieces[index].empty();
+            this_->pieces[index] = EMPTY_PIECE;
             continue;
         }
 
@@ -113,12 +108,12 @@ void ChessGameState::s960() {
             p.type = setup960[column-1];
         }
 
-        pieces[index] = p;
+        this_->pieces[index] = p;
     }
 }
 
-int ChessGameState::getWinner() const {
-    switch (status) {
+int getWinner(ChessGameState* this_) {
+    switch (this_->status) {
         case PLAYING:
             return -1;
         case CHECKMATE_WHITE:
@@ -130,8 +125,8 @@ int ChessGameState::getWinner() const {
     }
 }
 
-int ChessGameState::getWinningPlayer() const {
-    float socre = evaluate(*this);
+int getWinningPlayer(ChessGameState* this_) {
+    float socre = evaluate(this_);
     if (socre <= -1) {
         return 1;
     } else if (socre >= 1) {
@@ -153,8 +148,8 @@ static PieceType PROMOTIONS[4] {
     KNIGHT, BISHOP, ROOK, QUEEN
 };
 
-void ChessGameState::getPossibleMovesSimple(std::vector<ChessMove>& found, int index) const {
-    auto p = pieces[index];
+void getPossibleMovesSimple(ChessGameState* this_, std::vector<ChessMove>& found, int index) {
+    auto p = this_->pieces[index];
     auto mvl = PIECE_MOVES[p.type];
 
     int direction, i;
@@ -171,18 +166,18 @@ void ChessGameState::getPossibleMovesSimple(std::vector<ChessMove>& found, int i
                 int current = index;
                 while (true) {
                     current += direction;
-                    target = pieces[current];
+                    target = this_->pieces[current];
                     if (target.type == PieceType::EMPTY) {
                         // we can move freely
-                        found.emplace_back(ChessMove(
-                            (char)index, (char)current, false, false, PieceType::INVALID
-                        ));
+                        found.emplace_back(ChessMove{
+                                (char) index, (char) current, false, false, PieceType::INVALID
+                        });
                     } else {
                         if (target.type != PieceType::INVALID && target.black != p.black) {
                             // capture
-                            found.emplace_back(ChessMove(
-                                (char)index, (char)current, false, false, PieceType::INVALID
-                            ));
+                            found.emplace_back(ChessMove{
+                                    (char) index, (char) current, false, false, PieceType::INVALID
+                            });
                         }
                         break;
                     }
@@ -194,36 +189,36 @@ void ChessGameState::getPossibleMovesSimple(std::vector<ChessMove>& found, int i
         case KING:
             // check castle, fall through to knight
             if (!p.moved) {
-                if (pieces[index-1].type == PieceType::EMPTY &&
-                pieces[index-2].type == PieceType::EMPTY &&
-                pieces[index-3].type == PieceType::ROOK && !pieces[index-3].moved && pieces[index-3].black == p.black
+                if (this_->pieces[index-1].type == PieceType::EMPTY &&
+                        this_->pieces[index-2].type == PieceType::EMPTY &&
+                        this_->pieces[index-3].type == PieceType::ROOK && !this_->pieces[index-3].moved && this_->pieces[index-3].black == p.black
                 ) {
                     // short castle
-                    found.emplace_back(ChessMove(
-                        (char)index, (char)(index - 2), true, false, PieceType::INVALID
-                    ));
+                    found.emplace_back(ChessMove{
+                            (char) index, (char) (index - 2), true, false, PieceType::INVALID
+                    });
                 }
 
-                if (pieces[index+1].type == PieceType::EMPTY &&
-                pieces[index+2].type == PieceType::EMPTY &&
-                pieces[index+3].type == PieceType::EMPTY &&
-                pieces[index+4].type == PieceType::ROOK && !pieces[index+4].moved && pieces[index+4].black == p.black
+                if (this_->pieces[index+1].type == PieceType::EMPTY &&
+                        this_->pieces[index+2].type == PieceType::EMPTY &&
+                        this_->pieces[index+3].type == PieceType::EMPTY &&
+                        this_->pieces[index+4].type == PieceType::ROOK && !this_->pieces[index+4].moved && this_->pieces[index+4].black == p.black
                 ) {
                     // long castle
-                    found.emplace_back(ChessMove(
-                        (char)index, (char)(index + 2), true, false, PieceType::INVALID
-                        ));
+                    found.emplace_back(ChessMove{
+                            (char) index, (char) (index + 2), true, false, PieceType::INVALID
+                    });
                 }
             }
 
         case KNIGHT:
             for (i = 0; i < 8; i++) {
                 direction = mvl[i];
-                target = pieces[index + direction];
+                target = this_->pieces[index + direction];
                 if (target.type == PieceType::EMPTY || (target.type != PieceType::INVALID && target.black != p.black)) {
-                    found.emplace_back(ChessMove(
-                        (char)index, (char)(index + direction), false, false, PieceType::INVALID
-                        ));
+                    found.emplace_back(ChessMove{
+                            (char) index, (char) (index + direction), false, false, PieceType::INVALID
+                    });
                 }
             }
             break;
@@ -231,49 +226,49 @@ void ChessGameState::getPossibleMovesSimple(std::vector<ChessMove>& found, int i
         case PAWN:
             int coeff = ((int)!p.black) * 2 - 1;
             direction = coeff * 10;
-            bool nextRankLast = pieces[index + 2 * direction].type == PieceType::INVALID;
+            bool nextRankLast = this_->pieces[index + 2 * direction].type == PieceType::INVALID;
 
-            if (pieces[index + direction].type == PieceType::EMPTY) {
+            if (this_->pieces[index + direction].type == PieceType::EMPTY) {
                 if (nextRankLast) {
                     for (auto pr : PROMOTIONS) {
-                        found.emplace_back(ChessMove(
-                            (char)index, (char)(index + direction), false, false, pr
-                            ));
+                        found.emplace_back(ChessMove{
+                                (char) index, (char) (index + direction), false, false, pr
+                        });
                     }
                 } else {
-                    found.emplace_back(ChessMove(
-                        (char)index, (char)(index + direction), false, false, PieceType::INVALID
-                        ));
+                    found.emplace_back(ChessMove{
+                            (char) index, (char) (index + direction), false, false, PieceType::INVALID
+                    });
 
-                    if (!p.moved && pieces[index + 2 * direction].type == PieceType::EMPTY) {
-                        found.emplace_back(ChessMove(
-                            (char)index, (char)(index + 2 * direction), false, false, PieceType::INVALID
-                            ));
+                    if (!p.moved && this_->pieces[index + 2 * direction].type == PieceType::EMPTY) {
+                        found.emplace_back(ChessMove{
+                                (char) index, (char) (index + 2 * direction), false, false, PieceType::INVALID
+                        });
                     }
 
-                    if (lastMove.fromIndex != -1 && std::abs(lastMove.toIndex - index) == 1 && std::abs(lastMove.toIndex - lastMove.fromIndex) == 20 && pieces[lastMove.toIndex].type == PieceType::PAWN) {
-                        found.emplace_back(ChessMove(
-                            (char)index, (char)(lastMove.toIndex + direction), false, true, PieceType::INVALID
-                            ));
+                    if (this_->lastMove.fromIndex != -1 && std::abs(this_->lastMove.toIndex - index) == 1 && std::abs(this_->lastMove.toIndex - this_->lastMove.fromIndex) == 20 && this_->pieces[this_->lastMove.toIndex].type == PieceType::PAWN) {
+                        found.emplace_back(ChessMove{
+                                (char) index, (char) (this_->lastMove.toIndex + direction), false, true, PieceType::INVALID
+                        });
                     }
                 }
             }
 
             for (int j = -1; j < 2; j += 2) {
                 int idx = index + direction + j;
-                auto tgt = pieces[idx];
+                auto tgt = this_->pieces[idx];
 
                 if (tgt.type != PieceType::INVALID && tgt.type != PieceType::EMPTY && tgt.black != p.black) {
                     if (nextRankLast) {
                         for (auto pr : PROMOTIONS) {
-                            found.emplace_back(ChessMove(
-                                (char)index, (char)(idx), false, false, pr
-                                ));
+                            found.emplace_back(ChessMove{
+                                    (char) index, (char) (idx), false, false, pr
+                            });
                         }
                     } else {
-                        found.emplace_back(ChessMove(
-                            (char)index, (char)(idx), false, false, PieceType::INVALID
-                            ));
+                        found.emplace_back(ChessMove{
+                                (char) index, (char) (idx), false, false, PieceType::INVALID
+                        });
                     }
                 }
             }
@@ -285,33 +280,33 @@ static std::vector<ChessMove> found(120);
 static std::vector<ChessMove> replies(120);
 static ChessGameState tempMoveState {};
 
-void ChessGameState::getPossibleMoves(std::vector<ChessMove>& vector, int index) const {
+void getPossibleMoves(ChessGameState* this_, std::vector<ChessMove>& vector, int index) {
     found.clear();
     replies.clear();
 
-    getPossibleMovesSimple(found, index);
+    getPossibleMovesSimple(this_, found, index);
 
     int otherPieces[16];
     memset(otherPieces, 0, sizeof(int) * 16);
     int idx = 0;
     for (int i = 20; i < 100; i++) {
-        auto p = pieces[i];
-        if (p.type != PieceType::INVALID && p.type != PieceType::EMPTY && p.black != blackToMove) {
+        auto p = this_->pieces[i];
+        if (p.type != PieceType::INVALID && p.type != PieceType::EMPTY && p.black != this_->blackToMove) {
             otherPieces[idx] = i;
             idx++;
         }
     }
 
     for (ChessMove &mv : found) {
-        tempMoveState = *this;
-        tempMoveState.move(mv);
+        memcpy(&tempMoveState, this_, sizeof(ChessGameState));
+        move(&tempMoveState, mv);
 
         bool goodMove = true;
         for (auto opponent : otherPieces) {
             if (opponent == mv.toIndex) continue;  // captured
             if (opponent == 0) break;  // no more enemy pieces
 
-            tempMoveState.getPossibleMovesSimple(replies, opponent);
+            getPossibleMovesSimple(&tempMoveState, replies, opponent);
 
             for (auto &reply : replies) {
                 if (tempMoveState.pieces[reply.toIndex].type == PieceType::KING) {
@@ -338,54 +333,53 @@ void ChessGameState::getPossibleMoves(std::vector<ChessMove>& vector, int index)
     }
 }
 
-void ChessGameState::getPossibleMoves(std::vector<ChessMove> &vector) const {
+void getPossibleMoves(ChessGameState* this_, std::vector<ChessMove> &vector) {
     for (int i = 20; i < 100; i++) {
-        if (pieces[i].black == blackToMove) {
-            getPossibleMoves(vector, i);
+        if (this_->pieces[i].black == this_->blackToMove) {
+            getPossibleMoves(this_, vector, i);
         }
     }
 }
 
-void ChessGameState::move(ChessMove &move) {
-    blackToMove = !blackToMove;
+void move(ChessGameState* this_, ChessMove move) {
+    this_->blackToMove = !this_->blackToMove;
 
     if (move.fromIndex != -1) {
         if (move.isEnPassant) {
-            pieces[lastMove.toIndex].empty();
+            this_->pieces[this_->lastMove.toIndex] = EMPTY_PIECE;
         }
 
         if (move.isCastle) {
             if (move.toIndex > move.fromIndex) {
-                pieces[move.toIndex - 1] = pieces[move.toIndex + 2];
-                pieces[move.toIndex + 2].empty();
+                this_->pieces[move.toIndex - 1] = this_->pieces[move.toIndex + 2];
+                this_->pieces[move.toIndex + 2] = EMPTY_PIECE;
             } else {
-                pieces[move.toIndex + 1] = pieces[move.toIndex - 1];
-                pieces[move.toIndex - 1].empty();
+                this_->pieces[move.toIndex + 1] = this_->pieces[move.toIndex - 1];
+                this_->pieces[move.toIndex - 1] = EMPTY_PIECE;
             }
         }
 
         if (move.promotion != PieceType::INVALID) {
-            pieces[move.fromIndex].type = move.promotion;
+            this_->pieces[move.fromIndex].type = move.promotion;
         }
 
-        pieces[move.toIndex] = pieces[move.fromIndex];
-        pieces[move.toIndex].moved = true;
-        pieces[move.fromIndex].empty();
+        this_->pieces[move.toIndex] = this_->pieces[move.fromIndex];
+        this_->pieces[move.toIndex].moved = true;
+        this_->pieces[move.fromIndex] = EMPTY_PIECE;
 
-        if (move.fromIndex == lastMove2.toIndex && move.toIndex == lastMove2.fromIndex) {
-            repeatedMoves++;
+        if (move.fromIndex == this_->lastMove2.toIndex && move.toIndex == this_->lastMove2.fromIndex) {
+            this_->repeatedMoves++;
         } else {
-            repeatedMoves = 0;
+            this_->repeatedMoves = 0;
         }
     }
 
-    lastMove2 = lastMove;
-    lastMove = move;
-    currentPlayer = 1-currentPlayer;
+    this_->lastMove2 = this_->lastMove;
+    this_->lastMove = move;
 }
 
 static std::vector<ChessMove> blackMoves(20), whiteMoves(20);
-void ChessGameState::update() {
+void update(ChessGameState* this_) {
     blackMoves.clear();
     whiteMoves.clear();
 
@@ -394,8 +388,8 @@ void ChessGameState::update() {
     int wi, bi;
     wi = bi = 0;
 
-    if (repeatedMoves >= 6) {
-        status = Status::DRAW;
+    if (this_->repeatedMoves >= 6) {
+        this_->status = Status::DRAW;
         return;
     }
 
@@ -403,7 +397,7 @@ void ChessGameState::update() {
     memset(&blackPieces, 0, 16 * sizeof(int));
 
     for (int i = 20; i < 100; i++) {
-        auto p = pieces[i];
+        auto p = this_->pieces[i];
         if (p.type != PieceType::INVALID && p.type != PieceType::EMPTY) {
             if (p.black) {
                 blackPieces[bi] = i;
@@ -417,27 +411,27 @@ void ChessGameState::update() {
 
     // check black moves
     for (auto i : blackPieces) {
-        getPossibleMoves(blackMoves, i);
+        getPossibleMoves(this_, blackMoves, i);
     }
     // check white moves
     for (auto i : whitePieces) {
-        getPossibleMoves(whiteMoves, i);
+        getPossibleMoves(this_, whiteMoves, i);
     }
 
     bool isMate = false;
-    if (blackToMove) {
+    if (this_->blackToMove) {
         if (blackMoves.empty()) {
             for (auto mv : whiteMoves) {
-                if (pieces[mv.toIndex].type == PieceType::KING) {
+                if (this_->pieces[mv.toIndex].type == PieceType::KING) {
                     isMate = true;
                     break;
                 }
             }
 
             if (isMate) {
-                status = Status::CHECKMATE_WHITE;
+                this_->status = Status::CHECKMATE_WHITE;
             } else {
-                status = Status::STALEMATE;
+                this_->status = Status::STALEMATE;
             }
 
             return;
@@ -445,16 +439,16 @@ void ChessGameState::update() {
     } else {
         if (whiteMoves.empty()) {
             for (auto mv : blackMoves) {
-                if (pieces[mv.toIndex].type == PieceType::KING) {
+                if (this_->pieces[mv.toIndex].type == PieceType::KING) {
                     isMate = true;
                     break;
                 }
             }
 
             if (isMate) {
-                status = Status::CHECKMATE_BLACK;
+                this_->status = Status::CHECKMATE_BLACK;
             } else {
-                status = Status::STALEMATE;
+                this_->status = Status::STALEMATE;
             }
 
             return;
@@ -466,7 +460,7 @@ void ChessGameState::update() {
     whiteKB = blackKB = whiteOther = blackOther = 0;
     for (int i : whitePieces) {
         if (i == 0) break;
-        auto p = pieces[i];
+        auto p = this_->pieces[i];
         if (p.type == PieceType::KNIGHT || p.type == PieceType::BISHOP) {
             whiteKB++;
         } else if (p.type != PieceType::KING) {
@@ -475,7 +469,7 @@ void ChessGameState::update() {
     }
     for (int i : blackPieces) {
         if (i == 0) break;
-        auto p = pieces[i];
+        auto p = this_->pieces[i];
         if (p.type == PieceType::KNIGHT || p.type == PieceType::BISHOP) {
             blackKB++;
         } else if (p.type != PieceType::KING) {
@@ -484,11 +478,6 @@ void ChessGameState::update() {
     }
 
     if (blackOther == 0 && whiteOther == 0 && blackKB <= 1 && whiteKB <= 1) {
-        status = Status::DRAW;
+        this_->status = Status::DRAW;
     }
-}
-
-long ChessGameState::hash() const {
-    // TODO
-    return 0;
 }

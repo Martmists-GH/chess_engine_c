@@ -8,48 +8,48 @@
 #include "../util/random.h"
 #include "gperftools/malloc_extension.h"
 
+// initial board for setup
+static ChessGameState board;
 
-ChessMove MinMaxEngine::process(ChessGameState &state) {
-    printf("Process called\n");
-    if (state.lastMove2.fromIndex == -1) {
-        this->root.currentState.move(state.lastMove);
+ChessMove MinMaxEngine::process(ChessGameState* state) {
+//    printf("Process called\n");
+
+    if (state->lastMove2.fromIndex == -1) {
+        memcpy(&this->root->currentState, state, sizeof(ChessGameState));
+        this->root->player2 = state->blackToMove;
     } else {
-        auto item = this->root.deallocAndGet(state.lastMove);
-        this->root.~Node();
-        // siblings cleared, we can override parent
+        auto item = this->root->getChild(state->lastMove);
+        this->root->clearChildren(item);
+        delete this->root;
         this->root = item;
-        item.parent = nullptr;
+        this->root->parent = nullptr;
     }
 
-    printf("Looping k times...\n");
+//    printf("Looping k times...\n");
     for (int x = 0; x < k; x++) {
-        this->root.doMCTS(depth);
+        printf("%d/%d\n", x, k);
+        this->root->doMCTS(depth);
     }
 
-    ChessMove mv = this->root.getBestMove();
-    printf("Move: %d,%d\n", mv.fromIndex, mv.toIndex);
+    ChessMove mv = this->root->getBestMove();
+//    printf("Move: %d,%d\n", mv.fromIndex, mv.toIndex);
 
-//    printf("Updating internal board...\n");
-//    this->root.currentState.move(mv);
-//    this->root.currentState.update();
-    auto item2 = this->root.deallocAndGet(mv);
-    this->root.~Node();
-    this->root = item2;
-    item2.parent = nullptr;
-
-//    printf("Done.\n");
-
-//    std::string data;
-//    MallocExtension::instance()->GetHeapSample(&data);
-//    std::ofstream myfile;
-//    myfile.open("heapz_dump");
-//    myfile.write(data.c_str(), data.size());
-//    myfile.close();
+    // handle own move
+    auto item = this->root->getChild(mv);
+    this->root->clearChildren(item);
+    delete this->root;
+    this->root = item;
+    this->root->parent = nullptr;
 
     return mv;
 }
 
 MinMaxEngine::MinMaxEngine(int depth, int k, int c) : depth(depth), k(k) {
-    this->root.currentState.standard();
-    this->root.C = c;
+    standard(&board);  // dummy
+    this->root = new Node(&board);
+    this->root->C = c;
+}
+
+MinMaxEngine::~MinMaxEngine() {
+    delete this->root;
 }

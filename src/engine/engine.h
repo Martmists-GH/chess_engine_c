@@ -9,5 +9,5 @@
 
 class Engine {
 public:
-    virtual ChessMove process(ChessGameState& state) = 0;
+    virtual ChessMove process(ChessGameState* state) = 0;
 };

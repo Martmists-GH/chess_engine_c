@@ -12,7 +12,7 @@ static int movingIndex = -1;
 static float mouseX = -1;
 static float mouseY = -1;
 static std::vector<ChessMove> movesPossible;
-static ChessMove promotionMove {};
+static ChessMove promotionMove = DUMMY_MOVE;
 
 static int PROMOTION_SQUARES[4] = {
         27, 28, 35, 36
@@ -150,11 +150,11 @@ void clickMouse(MetaContext* ctx, int action, int button, int mods) {
             } else {
                 moving = false;
                 promotionMove.promotion = promotion;
-                ctx->board->move(promotionMove);
-                ctx->board->update();
+                move(ctx->board, promotionMove);
+                update(ctx->board);
             }
 
-            promotionMove.dummy();
+            promotionMove = DUMMY_MOVE;
             return;
         }
 
@@ -162,7 +162,7 @@ void clickMouse(MetaContext* ctx, int action, int button, int mods) {
             if (ctx->board->pieces[bidx].type != PieceType::EMPTY && ctx->board->pieces[bidx].black == ctx->board->blackToMove) {
                 // clicked 1st
                 movingIndex = idx;
-                ctx->board->getPossibleMoves(movesPossible, bidx);
+                getPossibleMoves(ctx->board, movesPossible, bidx);
                 if (movesPossible.empty()) {
                     moving = false;
                     return;
@@ -173,8 +173,7 @@ void clickMouse(MetaContext* ctx, int action, int button, int mods) {
             }
         } else {
             // clicked 2nd; check moves and do them
-            ChessMove mv { };
-            mv.dummy();
+            ChessMove mv = DUMMY_MOVE;
 
             for (auto& move : movesPossible) {
                 if (move.toIndex == bidx) {
@@ -186,8 +185,8 @@ void clickMouse(MetaContext* ctx, int action, int button, int mods) {
                 if (mv.promotion != PieceType::INVALID) {
                     promotionMove = mv;
                 } else {
-                    ctx->board->move(mv);
-                    ctx->board->update();
+                    move(ctx->board, mv);
+                    update(ctx->board);
                 }
             }
 
@@ -210,6 +209,5 @@ static RenderLayer movesLayer {
 };
 
 RenderLayer* getMovesLayer() {
-    promotionMove.dummy();
     return &movesLayer;
 }

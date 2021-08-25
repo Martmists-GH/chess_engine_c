@@ -4,10 +4,9 @@
 
 #pragma once
 
-
-#include "../mcts/GameState.h"
 #include "ChessMove.h"
 #include "ChessPiece.h"
+#include <vector>
 
 typedef enum {
     PLAYING,
@@ -17,28 +16,24 @@ typedef enum {
     DRAW
 } Status;
 
-class ChessGameState : public GameState<ChessMove> {
-public:
-    ChessPiece pieces[120];
-    bool blackToMove : 1 = false;
+typedef struct {
+    ChessPiece pieces[120] { };
     unsigned char repeatedMoves : 4 = 0;
     Status status : 3 = PLAYING;
+    bool blackToMove : 1 = false;
+    ChessMove lastMove = DUMMY_MOVE;
+    ChessMove lastMove2 = DUMMY_MOVE;
+} ChessGameState;
 
-    ChessMove lastMove;
-    ChessMove lastMove2;
+void standard(ChessGameState* this_);
+void s960(ChessGameState* this_);
 
-    ChessGameState();
-    void standard();
-    void s960();
+void rotate(ChessGameState* this_);
 
-    void rotate();
-
-    int getWinner() const override;
-    int getWinningPlayer() const override;
-    void getPossibleMovesSimple(std::vector<ChessMove>& vector, int index) const;
-    void getPossibleMoves(std::vector<ChessMove>& vector, int index) const;
-    void getPossibleMoves(std::vector<ChessMove>& vector) const override;
-    void move(ChessMove &mv) override;
-    void update() override;
-    long hash() const override;
-};
+int getWinner(ChessGameState* this_);
+int getWinningPlayer(ChessGameState* this_);
+void getPossibleMovesSimple(ChessGameState* this_, std::vector<ChessMove>& vector, int index);
+void getPossibleMoves(ChessGameState* this_, std::vector<ChessMove>& vector, int index);
+void getPossibleMoves(ChessGameState* this_, std::vector<ChessMove>& vector);
+void move(ChessGameState* this_, ChessMove mv);
+void update(ChessGameState* this_);

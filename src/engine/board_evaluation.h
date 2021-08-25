@@ -6,4 +6,4 @@
 
 #include "../game/ChessGameState.h"
 
-float evaluate(const ChessGameState& board);
+float evaluate(ChessGameState* board);

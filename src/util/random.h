@@ -13,3 +13,8 @@ T& randomItem(std::vector<T>& ptr) {
     int index = distribution(generator);
     return ptr.at(index);
 }
+
+template <typename T>
+void shuffle(std::vector<T>& ptr) {
+    std::shuffle(ptr.begin(),  ptr.end(), generator);
+}

@@ -15,14 +15,16 @@ typedef enum {
     INVALID,
 } PieceType;
 
-class ChessPiece {
-public:
-    PieceType type : 3;
-    bool moved : 1;
-    bool black : 1;
+typedef struct {
+    PieceType type: 3;
+    bool moved: 1;
+    bool black: 1;
+} ChessPiece;
 
-    void dummy();
-    void empty();
+static ChessPiece INVALID_PIECE = {
+        INVALID, false, false
 };
 
-
+static ChessPiece EMPTY_PIECE = {
+        EMPTY, false, false
+};

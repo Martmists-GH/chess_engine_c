@@ -11,10 +11,11 @@
 class MinMaxEngine : public Engine {
 private:
     int depth, k;
-    Node<ChessMove, ChessGameState> root;
+    Node* root;
 
 public:
     MinMaxEngine(int depth, int k, int c);
+    ~MinMaxEngine();
 
-    ChessMove process(ChessGameState& state) override;
+    ChessMove process(ChessGameState* state) override;
 };

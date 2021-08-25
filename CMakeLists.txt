@@ -24,8 +24,9 @@ add_executable(chess_engine_c
 
         # game
         src/game/ChessGameState.cpp
-        src/game/ChessMove.cpp
-        src/game/ChessPiece.cpp
+
+        # mcts
+        src/mcts/Node.cpp
 
         # ui
         src/ui/rendermain.cpp

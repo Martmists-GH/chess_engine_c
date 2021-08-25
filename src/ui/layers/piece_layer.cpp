@@ -16,8 +16,7 @@ void renderPieces(RenderContext* ctx) {
     SkMemoryStream stream(svg.c_str(), svg.length());
     auto root = SkSVGDOM::MakeFromStream(stream);
 
-    renderBoard = *ctx->board;
-//    rotate(&renderBoard);
+    memcpy(&renderBoard, ctx->board, sizeof(ChessGameState));
 
     for (int i = 0; i < 64; i++) {
         int col = i % 8;

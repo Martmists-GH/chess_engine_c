@@ -4,24 +4,17 @@
 
 #pragma once
 
-
-#include "../mcts/Move.h"
 #include "ChessPiece.h"
 
-class ChessMove : public Move {
-public:
+
+typedef struct {
     char fromIndex;
     char toIndex;
-    bool isCastle : 1;
-    bool isEnPassant : 1;
-    PieceType promotion : 3;
+    bool isCastle: 1;
+    bool isEnPassant: 1;
+    PieceType promotion: 3;
+} ChessMove;
 
-    ChessMove();
-    ChessMove(int fromIndex, int toIndex);
-    ChessMove(int fromIndex, int toIndex, bool isCastle, bool isEnPassant, PieceType promotion);
-
-    void dummy() override;
-    long hash() override;
+static ChessMove DUMMY_MOVE = {
+    -1, -1, false, false, INVALID
 };
-
-

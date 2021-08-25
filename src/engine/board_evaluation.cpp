@@ -15,7 +15,7 @@ static float PIECE_SCORE[] = {
         1.0
 };
 
-float evaluatePieces(const ChessGameState& board, const int* whitePieces, const int* blackPieces) {
+float evaluatePieces(ChessGameState* board, const int* whitePieces, const int* blackPieces) {
     float score = 0;
 
     for (int i = 0; i < 16; i++) {
@@ -23,11 +23,11 @@ float evaluatePieces(const ChessGameState& board, const int* whitePieces, const 
         int bidx = blackPieces[i];
 
         if (widx != 0) {
-            score += PIECE_SCORE[board.pieces[widx].type];
+            score += PIECE_SCORE[board->pieces[widx].type];
         }
 
         if (bidx != 0) {
-            score -= PIECE_SCORE[board.pieces[widx].type];
+            score -= PIECE_SCORE[board->pieces[widx].type];
         }
     }
 
@@ -37,18 +37,18 @@ float evaluatePieces(const ChessGameState& board, const int* whitePieces, const 
 static ChessGameState copyForBlack;
 static std::vector<ChessMove> movesAvailable(120);
 
-float evaluateMovement(const ChessGameState& board, const int* whitePieces, const int* blackPieces) {
+float evaluateMovement(ChessGameState* board, const int* whitePieces, const int* blackPieces) {
     movesAvailable.clear();
 
     float moves = 0.f;
-    const ChessGameState* white;
-    const ChessGameState* black;
+    ChessGameState* white;
+    ChessGameState* black;
 
-    if (board.blackToMove) {
-        black = &board;
+    if (board->blackToMove) {
+        black = board;
         white = &copyForBlack;
     } else {
-        white = &board;
+        white = board;
         black = &copyForBlack;
     }
 
@@ -57,11 +57,11 @@ float evaluateMovement(const ChessGameState& board, const int* whitePieces, cons
         int bidx = blackPieces[i];
 
         if (widx != 0) {
-            white->getPossibleMoves(movesAvailable, widx);
+            getPossibleMoves(white, movesAvailable, widx);
             moves += movesAvailable.size();
         }
         if (bidx != 0) {
-            black->getPossibleMoves(movesAvailable, bidx);
+            getPossibleMoves(black, movesAvailable, bidx);
             moves -= movesAvailable.size();
         }
     }
@@ -69,8 +69,8 @@ float evaluateMovement(const ChessGameState& board, const int* whitePieces, cons
     return .5f * moves;
 }
 
-float evaluate(const ChessGameState& board) {
-    switch(board.status) {
+float evaluate(ChessGameState* board) {
+    switch(board->status) {
         case CHECKMATE_BLACK:
             return -999999;
         case CHECKMATE_WHITE:
@@ -81,16 +81,14 @@ float evaluate(const ChessGameState& board) {
         default:
             int wp[16], bp[16];
             int wi = 0, bi = 0;
-            copyForBlack = board;
-            ChessMove dummy;
-            dummy.dummy();
-            copyForBlack.move(dummy);
+            memcpy(&copyForBlack, board, sizeof(ChessGameState));
+            move(&copyForBlack, DUMMY_MOVE);
 
             memset(&wp, 0, 16 * sizeof(int));
             memset(&bp, 0, 16 * sizeof(int));
 
             for (int i = 20; i < 100; i++) {
-                auto p = board.pieces[i];
+                auto p = board->pieces[i];
                 if (p.type != PieceType::INVALID && p.type != PieceType::EMPTY) {
                     if (p.black) {
                         bp[bi] = i;

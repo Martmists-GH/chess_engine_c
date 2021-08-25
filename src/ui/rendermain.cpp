@@ -59,12 +59,12 @@ void cleanupSkia() {
 
 void setup_game() {
     ctx.board = new ChessGameState();
-    ctx.board->standard();
+    standard(ctx.board);
     ctx.flipped = true;
     ctx.players[0].isHuman = false;
     ctx.players[0].engine = new RandomEngine();
     ctx.players[1].isHuman = false;
-    ctx.players[1].engine = new MinMaxEngine(16, 50, 30);
+    ctx.players[1].engine = new MinMaxEngine(50, 500, 2);
 }
 
 void ui_init() {
@@ -103,7 +103,7 @@ void ui_init() {
 
 void ui_loop() {
     while (!glfwWindowShouldClose(window)) {
-        glfwWaitEvents();
+        glfwPollEvents();
         ui_draw();
         sContext->flush();
         glfwSwapBuffers(window);
@@ -140,9 +140,9 @@ void ui_loop() {
 void doEngineMove() {
     auto cfg = &ctx.players[ctx.board->blackToMove];
     if (!cfg->isHuman) {
-        auto mv = cfg->engine->process(*ctx.board);
-        ctx.board->move(mv);
-        ctx.board->update();
+        auto mv = cfg->engine->process(ctx.board);
+        move(ctx.board, mv);
+        update(ctx.board);
     }
 }
 

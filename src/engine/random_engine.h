@@ -9,5 +9,5 @@
 
 class RandomEngine : public Engine {
 public:
-    ChessMove process(ChessGameState& state) override;
+    ChessMove process(ChessGameState* state) override;
 };

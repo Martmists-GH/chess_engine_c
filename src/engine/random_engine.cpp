@@ -6,9 +6,9 @@
 #include "../util/random.h"
 
 
-std::vector<ChessMove> moves (20);
-ChessMove RandomEngine::process(ChessGameState &state) {
+static std::vector<ChessMove> moves (20);
+ChessMove RandomEngine::process(ChessGameState* state) {
     moves.clear();
-    state.getPossibleMoves(moves);
+    getPossibleMoves(state, moves);
     return randomItem(moves);
 }
